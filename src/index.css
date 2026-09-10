@@ -1,0 +1,115 @@
+@import 'tailwindcss';
+
+/*
+ * Palette taken from neogames.online, the server this log comes from. Values are
+ * the rendered ones, copied rather than re-derived: when that site changes, copy
+ * it again instead of adjusting here.
+ *
+ * The two accents are not interchangeable. Gold has 12:1 on the panel but sits at
+ * L 0.87 — outside the lightness band a chart mark needs — so it carries text and
+ * fills: the headline figure, the active control, an emphasised word. Blue
+ * validates as a mark and carries the bars. This is how the site itself splits
+ * them, gold on the CTA and the featured number.
+ */
+@theme {
+  --color-night: #090c11;
+  --color-panel: #11151b;
+  --color-raise: #191f26;
+  --color-line: #222831;
+
+  --color-ink: #f1f4f7;
+  --color-mute: #adb5c0;
+
+  --color-gold: #ffcd2c;
+  --color-gold-deep: #e5b41f;
+  --color-blue: #0c8ce9;
+  --color-glow: #122536;
+  --color-glow-strong: #17324a;
+
+  /* The ink that goes on top of a filled accent — never white, gold is too light. */
+  --color-onaccent: #090c11;
+
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-night);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers that stack in columns align; standalone display numbers stay
+   proportional (see dataviz: tabular-nums only in columns). */
+.nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chrome draws its own clear affordance on search inputs; the page ships one that
+   works in every browser, so drop the native duplicate. */
+input[type='search']::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* Scroll areas inside cards: neogames marks the position in gold, track invisible. */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gold) transparent;
+}
+
+.scroll-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-gold);
+  border-radius: 3px;
+}
+
+/*
+ * One orchestrated page load on the upload screen: the title, the drop target and
+ * the steps arrive in that order instead of all at once. Staggered with inline
+ * animation-delay at the call site.
+ */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.rise {
+  animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/*
+ * The near-black ground is flat, and a drop target sitting on it reads as a hole.
+ * A wide, very low-alpha bloom behind the card gives it something to sit on. Cheap:
+ * one gradient, no blur filter.
+ */
+.bloom {
+  background:
+    radial-gradient(70% 45% at 50% 32%, rgb(12 140 233 / 0.13), transparent 72%),
+    radial-gradient(55% 35% at 50% 78%, rgb(255 205 44 / 0.06), transparent 72%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
+}

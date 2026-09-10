@@ -1,0 +1,34 @@
+# Static hosting (Hostinger / any Apache). The app is a single page with no router,
+# so there is nothing to rewrite here — only compression and caching.
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript application/json image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+
+  # Everything under /assets carries a content hash in its filename, so it can be
+  # cached forever: a new build produces new names.
+  <FilesMatch "\.(js|css)$">
+    ExpiresDefault "access plus 1 year"
+    Header set Cache-Control "public, immutable"
+  </FilesMatch>
+
+  <FilesMatch "\.(svg|png|ico|webp|woff2)$">
+    ExpiresDefault "access plus 30 days"
+  </FilesMatch>
+</IfModule>
+
+# index.html is the one file that must never be cached, or a deploy keeps serving the
+# old page and with it the old asset filenames.
+<FilesMatch "index\.html$">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, must-revalidate"
+  </IfModule>
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
