@@ -1,3 +1,4 @@
+import { formatAlz, priceOf } from '../lib/prices'
 import type { ItemCount } from '../lib/stats'
 
 type Props = {
@@ -43,32 +44,45 @@ export default function ItemRanking({ items, onSelect, emptyMessage }: Props) {
             className="scroll-thin overflow-y-auto pr-1"
             style={{ maxHeight: VISIBLE_ROWS * ROW_PX }}
           >
-            {items.map((item, index) => (
-              <li key={item.name} className="h-13 border-b border-line/60 last:border-0">
-                <button
-                  type="button"
-                  onClick={() => onSelect(item.name)}
-                  title={`Filtrar por ${item.name}`}
-                  className="group flex h-full w-full items-center gap-4 pl-1 pr-3 text-left transition-colors duration-200 hover:bg-raise focus:bg-raise focus:outline-none"
+            {items.map((item, index) => {
+              const price = priceOf(item.name)
+              return (
+                <li
+                  key={item.name}
+                  className="h-13 border-b border-line/60 last:border-0"
                 >
-                  <span className="nums w-8 shrink-0 text-center text-sm text-mute">
-                    {index + 1}
-                  </span>
-                  <span
-                    className="min-w-0 flex-1 truncate text-[15px] font-bold text-ink transition-colors duration-200 group-hover:text-gold"
-                    title={item.name}
+                  <button
+                    type="button"
+                    onClick={() => onSelect(item.name)}
+                    title={`Filtrar por ${item.name}`}
+                    className="group flex h-full w-full items-center gap-4 pl-1 pr-3 text-left transition-colors duration-200 hover:bg-raise focus:bg-raise focus:outline-none"
                   >
-                    {item.name}
-                  </span>
-                  <span className="nums w-20 shrink-0 text-right text-[15px] font-bold text-ink">
-                    {item.count.toLocaleString('pt-BR')}
-                  </span>
-                  <span className="nums w-16 shrink-0 text-right text-sm text-mute">
-                    {(item.share * 100).toFixed(1)}%
-                  </span>
-                </button>
-              </li>
-            ))}
+                    <span className="nums w-8 shrink-0 text-center text-sm text-mute">
+                      {index + 1}
+                    </span>
+                    <span className="flex min-w-0 flex-1 items-baseline gap-2">
+                      <span
+                        className="min-w-0 truncate text-[15px] font-bold text-ink transition-colors duration-200 group-hover:text-gold"
+                        title={item.name}
+                      >
+                        {item.name}
+                      </span>
+                      {price !== null && (
+                        <span className="nums shrink-0 text-sm text-mute">
+                          ({formatAlz(price)})
+                        </span>
+                      )}
+                    </span>
+                    <span className="nums w-20 shrink-0 text-right text-[15px] font-bold text-ink">
+                      {item.count.toLocaleString('pt-BR')}
+                    </span>
+                    <span className="nums w-16 shrink-0 text-right text-sm text-mute">
+                      {(item.share * 100).toFixed(1)}%
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
           </ol>
         </>
       )}

@@ -1,13 +1,16 @@
 import { useMemo, useState } from 'react'
 import ColumnChart from './components/ColumnChart'
 import Dropzone from './components/Dropzone'
+import ImportantFilter from './components/ImportantFilter'
 import ItemRanking from './components/ItemRanking'
+import JewelDrops from './components/JewelDrops'
 import Logo from './components/Logo'
 import RangeFilter from './components/RangeFilter'
 import SiteFooter from './components/SiteFooter'
 import StatTile from './components/StatTile'
 import WhereIsTheFile from './components/WhereIsTheFile'
 import { dayKey, parseDropListFile, type ParseResult } from './lib/droplist'
+import { countByGroup, filterImportant } from './lib/important'
 import {
   countByDay,
   countByHour,
@@ -29,6 +32,7 @@ export default function App() {
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [range, setRange] = useState<Range | null>(null)
   const [search, setSearch] = useState('')
+  const [important, setImportant] = useState(false)
   const [hour, setHour] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -36,6 +40,7 @@ export default function App() {
     setLoaded(null)
     setRange(null)
     setSearch('')
+    setImportant(false)
     setHour(null)
     setError(null)
   }
@@ -56,6 +61,7 @@ export default function App() {
       setLoaded({ result, fileName: file.name, days })
       setRange(defaultRange(days, dayKey(new Date())))
       setSearch('')
+      setImportant(false)
       setHour(null)
     } catch {
       setError('Não consegui ler esse arquivo.')
@@ -109,6 +115,8 @@ export default function App() {
       onRange={setRange}
       search={search}
       onSearch={setSearch}
+      important={important}
+      onImportant={setImportant}
       hour={hour}
       onHour={setHour}
       onReset={reset}
@@ -123,6 +131,8 @@ function Dashboard({
   onRange,
   search,
   onSearch,
+  important,
+  onImportant,
   hour,
   onHour,
   onReset,
@@ -133,6 +143,8 @@ function Dashboard({
   onRange: (range: Range) => void
   search: string
   onSearch: (search: string) => void
+  important: boolean
+  onImportant: (important: boolean) => void
   hour: number | null
   onHour: (hour: number | null) => void
   onReset: () => void
@@ -142,19 +154,20 @@ function Dashboard({
 
   const searching = search.trim() !== ''
 
-  // Range first, then name. The hour is applied on top of that — but the hour chart
-  // is drawn from the set *before* it, so picking 9h doesn't collapse the chart you
-  // picked from into a single bar. Everything else reads the fully filtered set.
-  const beforeHour = useMemo(
-    () => filterByName(filterByRange(result.drops, range), search),
-    [result.drops, range, search],
+  // The "importantes" toggle and the name both narrow what the log is, so they come
+  // first and every card reads them.
+  const kept = useMemo(
+    () => filterByName(filterImportant(result.drops, important), search),
+    [result.drops, important, search],
   )
+
+  // Range, then hour. The hour chart is drawn from the set *before* the hour, so
+  // picking 9h doesn't collapse the chart you picked from into a single bar.
+  // Everything else reads the fully filtered set.
+  const beforeHour = useMemo(() => filterByRange(kept, range), [kept, range])
   const selected = useMemo(() => filterByHour(beforeHour, hour), [beforeHour, hour])
 
-  const wholeFile = useMemo(
-    () => filterByHour(filterByName(result.drops, search), hour),
-    [result.drops, search, hour],
-  )
+  const wholeFile = useMemo(() => filterByHour(kept, hour), [kept, hour])
   const fullSpan = useMemo<Range>(
     () => ({ from: days[0], to: days[days.length - 1] }),
     [days],
@@ -162,6 +175,15 @@ function Dashboard({
   const byDay = useMemo(() => countByDay(wholeFile, fullSpan), [wholeFile, fullSpan])
   const byHour = useMemo(() => countByHour(beforeHour), [beforeHour])
   const items = useMemo(() => rankItems(selected), [selected])
+
+  // Counted without the toggle, so the strip reads the same whether it is on or off.
+  const groups = useMemo(
+    () =>
+      countByGroup(
+        filterByHour(filterByRange(filterByName(result.drops, search), range), hour),
+      ),
+    [result.drops, search, range, hour],
+  )
 
   const spanDays = daysBetween(range.from, range.to).length
   const activeDays = byDay.filter((day) => day.count > 0).length
@@ -185,7 +207,9 @@ function Dashboard({
 
   const emptyMessage = searching
     ? 'Nenhum item com esse nome no período.'
-    : 'Nenhum drop no período.'
+    : important
+      ? 'Nenhum item importante no período.'
+      : 'Nenhum drop no período.'
 
   return (
     <main className="mx-auto max-w-[1408px] px-3 py-10 sm:px-4">
@@ -215,11 +239,19 @@ function Dashboard({
         />
       </div>
 
+      <div className="mt-3">
+        <ImportantFilter on={important} onToggle={onImportant} groups={groups} />
+      </div>
+
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
         <StatTile
           hero
           label={
-            (searching ? `“${search.trim()}” ` : 'Drops ') +
+            (searching
+              ? `“${search.trim()}” `
+              : important
+                ? 'Itens importantes '
+                : 'Drops ') +
             (namedDay ?? (singleDay ? `em ${formatDay(range.from)}` : 'no período')) +
             (hourLabel ? ` às ${hourLabel}` : '')
           }
@@ -264,34 +296,31 @@ function Dashboard({
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2 lg:items-start">
-        <div className="grid gap-4">
-          <ColumnChart
-            title="Drops por hora"
-            subtitle={
-              hourLabel
-                ? `Só ${hourLabel} — clique na barra de novo para ver o dia inteiro`
-                : 'Clique numa barra para ver só aquele horário'
-            }
-            emptyMessage={emptyMessage}
-            onSelect={(key) => onHour(Number(key) === hour ? null : Number(key))}
-            columns={byHour.map((slot) => ({
-              key: String(slot.hour),
-              label: `${String(slot.hour).padStart(2, '0')}h às ${String(
-                slot.hour,
-              ).padStart(2, '0')}h59`,
-              value: slot.count,
-              caption: slot.hour % 3 === 0 ? `${slot.hour}h` : '',
-              selected: hour !== null && slot.hour === hour,
-            }))}
-          />
-        </div>
+        <ColumnChart
+          title="Drops por hora"
+          subtitle={
+            hourLabel
+              ? `Só ${hourLabel} — clique na barra de novo para ver o dia inteiro`
+              : 'Clique numa barra para ver só aquele horário'
+          }
+          emptyMessage={emptyMessage}
+          onSelect={(key) => onHour(Number(key) === hour ? null : Number(key))}
+          columns={byHour.map((slot) => ({
+            key: String(slot.hour),
+            label: `${String(slot.hour).padStart(2, '0')}h às ${String(
+              slot.hour,
+            ).padStart(2, '0')}h59`,
+            value: slot.count,
+            caption: slot.hour % 3 === 0 ? `${slot.hour}h` : '',
+            selected: hour !== null && slot.hour === hour,
+          }))}
+        />
 
-        <ItemRanking items={items} onSelect={onSearch} emptyMessage={emptyMessage} />
+        <JewelDrops items={items} onSelect={onSearch} />
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 grid gap-4 lg:grid-cols-2 lg:items-start">
         <ColumnChart
-          compact
           title="Drops por dia"
           subtitle={
             singleDay
@@ -304,10 +333,12 @@ function Dashboard({
             key: day.day,
             label: formatDay(day.day, 'long'),
             value: day.count,
-            caption: byDay.length > 20 ? undefined : formatDay(day.day, 'short'),
+            caption: byDay.length > 12 ? undefined : formatDay(day.day, 'short'),
             selected: day.day >= range.from && day.day <= range.to,
           }))}
         />
+
+        <ItemRanking items={items} onSelect={onSearch} emptyMessage={emptyMessage} />
       </div>
 
       <SiteFooter />
