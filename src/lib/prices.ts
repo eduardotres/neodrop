@@ -9,6 +9,8 @@ const PRICES: Record<string, number> = {
   'Jóia Azul Enfraquecida': 120_000_000,
   'Jóia Verde Enfraquecida': 80_000_000,
   'Jóia Violeta Enfraquecida': 180_000_000,
+  'Jóia Branca Enfraquecida': 280_000_000,
+  'Jóia Amarela Enfraquecida': 40_000_000,
 }
 
 const byName = new Map(

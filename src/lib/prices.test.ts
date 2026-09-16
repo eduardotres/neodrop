@@ -37,7 +37,7 @@ describe('formatAlz', () => {
 
 describe('jewelDrops', () => {
   const items = [
-    { name: 'Jóia Amarela Enfraquecida', count: 22, share: 0.5 },
+    { name: 'Jóia Sem Preço (teste)', count: 22, share: 0.5 },
     { name: 'Jóia Azul Enfraquecida', count: 16, share: 0.3 },
     { name: 'Núcleo Arcano (Alto)', count: 10, share: 0.1 },
     { name: 'Jóia Verde Enfraquecida', count: 3, share: 0.1 },
@@ -48,7 +48,7 @@ describe('jewelDrops', () => {
     expect(rows.map((row) => row.name)).toEqual([
       'Jóia Azul Enfraquecida',
       'Jóia Verde Enfraquecida',
-      'Jóia Amarela Enfraquecida',
+      'Jóia Sem Preço (teste)',
     ])
     expect(rows[0].total).toBe(1_920_000_000)
   })
