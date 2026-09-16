@@ -9,7 +9,13 @@ prefix being a colour code rather than an item id).
 ## Stack
 
 Vite + React + TypeScript + Tailwind v4. No backend, no router, no state library.
-Everything runs client-side and nothing is persisted.
+Everything runs client-side and nothing is persisted — the one exception is the
+visitor's cookie choice, kept in `localStorage`.
+
+Google Analytics (`G-67L5HXGT1E`) lives in `src/lib/analytics.ts` and only loads after
+the visitor clicks "Entendi" on the cookie banner, and only in a production build.
+Declining means no request to Google at all. The log file is never sent anywhere; keep
+it that way, since the footer promises it.
 
 ## Design
 

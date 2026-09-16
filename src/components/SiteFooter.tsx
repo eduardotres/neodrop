@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 const DISCORD = 'hiitmarqes'
 
 /**
- * The tool reads a file the player already has and talks to nothing. Saying so is
+ * The tool reads a file the player already has and never uploads it. Saying so is
  * also the clearest way to say it is not the server's own tool.
  */
 export default function SiteFooter() {
@@ -31,8 +31,8 @@ export default function SiteFooter() {
       <div className="mx-auto max-w-2xl text-center">
         <p className="text-sm leading-relaxed text-mute">
           O DropList foi feito por um jogador do Neo Games e não tem nenhum vínculo com
-          o servidor. Não é uma ferramenta oficial, não pede login e não se conecta a
-          lugar nenhum: ele só lê o arquivo de log que já está no seu PC.
+          o servidor. Não é uma ferramenta oficial e não pede login. O arquivo de log é
+          lido aqui mesmo, no seu navegador, e nunca é enviado pra lugar nenhum.
         </p>
 
         <p className="mt-5 flex flex-wrap items-center justify-center gap-2 text-sm text-mute">

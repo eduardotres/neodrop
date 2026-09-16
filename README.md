@@ -86,4 +86,8 @@ src/
 ```
 
 State is per-session by design: the log file is itself the history, so re-uploading
-it brings everything back. Nothing is persisted.
+it brings everything back. Nothing is persisted except the visitor's answer to the
+cookie banner.
+
+Google Analytics loads only after that answer is "Entendi", and only in a production
+build — `pnpm dev` never sends a hit.
